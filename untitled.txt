@@ -1,0 +1,35 @@
+export default async function handler(req, res) {
+  try {
+    const { amount, userPublicKey } = req.body;
+
+    if (!amount || !userPublicKey) {
+      return res.status(400).json({ error: "Missing data" });
+    }
+
+    const FEE_ACCOUNT = "BsFAqKtJQRNJBEyfwCf8EEdMxc296JwdpraVqHPYBdYt"; // 🔴 GANTI
+
+    // QUOTE
+    const quote = await fetch(
+      `https://quote-api.jup.ag/v6/quote?inputMint=So11111111111111111111111111111111111111112&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGk5rX2hP&amount=${amount}&slippageBps=50&feeBps=30`
+    ).then((r) => r.json());
+
+    // SWAP
+    const swap = await fetch("https://quote-api.jup.ag/v6/swap", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        quoteResponse: quote,
+        userPublicKey,
+        wrapAndUnwrapSol: true,
+        feeAccount: FEE_ACCOUNT
+      })
+    }).then((r) => r.json());
+
+    res.status(200).json(swap);
+
+  } catch (e) {
+    res.status(500).json({ error: "Swap failed" });
+  }
+}
